@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dimansha Wijebandara — Portfolio
 
-## Getting Started
+Personal portfolio + private admin panel for Dimansha Wijebandara, Senior Software Developer (R&D) at ABB, Helsinki.
 
-First, run the development server:
+Built with **Next.js 14 (App Router) + TypeScript + Tailwind + Prisma 6 + NextAuth + Resend**. Designed for deployment on **Vercel + Vercel Postgres**.
+
+## Features
+
+### Public site
+- Flat, minimalistic design (dark + light themes) with subtle motion
+- Home with hero, featured projects, live GitHub repos, experience teaser, CTA
+- About, Projects (manual + auto-fetched GitHub), Project detail (markdown), Achievements, Experience (timeline), Contact (with Resend + rate limit + honeypot)
+- SEO: per-page metadata, sitemap.xml, robots.txt, Open Graph
+- Lighthouse-friendly, fully responsive, accessible
+
+### Admin panel (on `admin.` subdomain)
+- Secure email + password login (NextAuth Credentials, bcrypt)
+- Dashboard with counts and recent messages
+- CRUD for: Profile, Projects, Achievements, Experience
+- GitHub repos manager (pin / hide / override description + thumbnail)
+- Contact messages inbox (mark read, delete, export CSV, mailto reply)
+- Site settings (SEO, OG image, analytics, contact recipient)
+- Change password
+
+## Local setup
 
 ```bash
+# 1) Install deps
+npm install
+
+# 2) Configure environment
+cp .env.example .env
+# fill DATABASE_URL, NEXTAUTH_SECRET, ADMIN_*, RESEND_API_KEY, etc.
+
+# 3) Initialize the database
+npm run db:push       # or: npm run db:migrate
+npm run db:seed       # creates admin user from ADMIN_EMAIL / ADMIN_PASSWORD
+
+# 4) Run dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Public site: <http://localhost:3000>
+- Admin login: <http://localhost:3000/admin/login>
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> **Corporate networks / Prisma SSL:** The repo includes `.npmrc` with `node-options=--use-system-ca` so Prisma can download engines through corporate proxies that inject a root CA (e.g. ABB).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Subdomain setup (production)
 
-## Learn More
+On Vercel, attach **two domains** to the same project:
 
-To learn more about Next.js, take a look at the following resources:
+- `dimansha.dev` → public site
+- `admin.dimansha.dev` → admin panel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`src/middleware.ts` reads the `Host` header. On the public host, `/admin/*` returns 404. On the admin host, the root redirects to `/admin` and all non-admin paths are routed under `/admin`. The middleware also enforces auth on `/admin` (except `/admin/login`).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Set `PUBLIC_HOST` and `ADMIN_HOST` env vars to match your domains.
 
-## Deploy on Vercel
+## Environment variables
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+See `.env.example` for the full list. Minimum to run:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Var | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection string |
+| `NEXTAUTH_SECRET` | NextAuth JWT secret (`openssl rand -base64 32`) |
+| `NEXTAUTH_URL` | Public URL of the site |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Used by `db:seed` to create the admin user |
+| `RESEND_API_KEY` + `CONTACT_TO_EMAIL` | Contact form delivery |
+| `GITHUB_USERNAME` | Whose repos to fetch (defaults to `DimanshaMalrindu`) |
+| `GITHUB_TOKEN` *(optional)* | Lifts rate limit from 60 to 5000/hr |
+| `PUBLIC_HOST`, `ADMIN_HOST` | Production hosts for middleware routing |
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Start dev server |
+| `npm run build` | Generate Prisma client + build Next.js |
+| `npm run start` | Run production build |
+| `npm run lint` | ESLint |
+| `npm run db:push` | Push schema to DB (no migration history) |
+| `npm run db:migrate` | Create/apply a dev migration |
+| `npm run db:deploy` | Apply migrations in production |
+| `npm run db:seed` | Seed admin user, profile, site settings |
+| `npm run db:studio` | Open Prisma Studio |
+
+## Deployment to Vercel
+
+1. Push to a GitHub repo.
+2. Import the repo in Vercel.
+3. Add the env vars from `.env.example`.
+4. Create a Vercel Postgres database; copy its `POSTGRES_PRISMA_URL` into `DATABASE_URL`.
+5. First deploy: `vercel-build` runs `prisma generate && next build`. After it succeeds, run `npm run db:deploy && npm run db:seed` locally pointing at the prod DB (or add as a one-off script).
+6. Add both domains in **Settings → Domains** (`dimansha.dev` and `admin.dimansha.dev`).
+
+## Project structure
+
+```
+src/
+├── app/
+│   ├── (public)/        # public portfolio routes
+│   ├── (admin)/admin/   # admin panel routes
+│   ├── api/             # contact, github, auth, admin APIs
+│   ├── sitemap.ts
+│   └── robots.ts
+├── components/{ui,public,admin}/
+├── lib/                 # db, auth, github, email, validators, rate-limit, session, content
+└── middleware.ts        # host-based + auth-based routing
+prisma/
+├── schema.prisma
+└── seed.ts
+```
+
+## Customization
+
+Almost everything is editable from the admin panel — name, bio, photo, accent color, projects, achievements, experience, GitHub overrides, SEO. To change layout/components, edit files under `src/components/public/`.
+
+---
+
+Built with care. © Dimansha Wijebandara.
+"# my_web_site" 
