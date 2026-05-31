@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Profile {
+  id           Int      @id @default(1)
+  name         String
+  title        String
+  tagline      String?
+  bio          String   @default("")
+  location     String?
+  photoUrl     String?
+  resumeUrl    String?
+  accentColor  String   @default("#0ea5e9")
+  email        String?
+  githubUrl    String?
+  linkedinUrl  String?
+  twitterUrl   String?
+  websiteUrl   String?
+  updatedAt    DateTime @updatedAt
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  description String   @default("")
+  techStack   String[] @default([])
+  images      String[] @default([])
+  demoUrl     String?
+  repoUrl     String?
+  featured    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RepoOverride {
+  id                Int      @id @default(autoincrement())
+  githubId          BigInt   @unique
+  name              String
+  pinned            Boolean  @default(false)
+  hidden            Boolean  @default(false)
+  customDescription String?
+  thumbnailUrl      String?
+  updatedAt         DateTime @updatedAt
+}
+
+model Achievement {
+  id        String    @id @default(cuid())
+  title     String
+  issuer    String?
+  date      DateTime?
+  link      String?
+  category  String?
+  icon      String?
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+}
+
+model Experience {
+  id        String    @id @default(cuid())
+  company   String
+  role      String
+  location  String?
+  startDate DateTime
+  endDate   DateTime?
+  current   Boolean   @default(false)
+  bullets   String[]  @default([])
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  ipHash    String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SiteSettings {
+  id              Int      @id @default(1)
+  siteTitle       String   @default("Dimansha Wijebandara — Portfolio")
+  siteDescription String   @default("Senior Software Developer (R&D) at ABB.")
+  ogImageUrl      String?
+  analyticsId     String?
+  contactToEmail  String?
+  updatedAt       DateTime @updatedAt
+}
